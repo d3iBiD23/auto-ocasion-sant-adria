@@ -28,6 +28,12 @@ import "./accent.css";
 import "./polish.css";
 import "./manager.css";
 const API = "/api/vehicles",
+  demoCars = [
+    { id: "demo-1", brand: "FIAT", model: "500C 1.2 Lounge", version: "Cabrio", year: 2015, kilometers: 81000, price: 7900, fuel: "Gasolina", power: 69, transmission: "Manual", description: "Un descapotable urbano, cuidado y listo para disfrutar.", images: ["https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1200&q=85"] },
+    { id: "demo-2", brand: "VOLKSWAGEN", model: "Golf VI 1.6 TDI", version: "Advance", year: 2009, kilometers: 210000, price: 6600, fuel: "Diésel", power: 105, transmission: "Manual", description: "Compacto eficiente con garantía incluida.", images: ["https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=1200&q=85"] },
+    { id: "demo-3", brand: "HONDA", model: "Civic Tourer 1.6 i-DTEC", version: "Sport", year: 2014, kilometers: 210000, price: 7900, fuel: "Diésel", power: 120, transmission: "Manual", description: "Familiar amplio y fiable para el día a día.", images: ["https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=1200&q=85"] },
+    { id: "demo-4", brand: "BMW", model: "X6 xDrive35i", version: "SUV Coupé", year: 2008, kilometers: 299000, price: 15900, fuel: "Gasolina", power: 306, transmission: "Automático", description: "SUV coupé de altas prestaciones.", images: ["https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=1200&q=85"] },
+  ],
   brands = [
     "Audi",
     "BMW",
@@ -592,7 +598,8 @@ function App() {
   const load = () =>
     fetch(API)
       .then((r) => r.json())
-      .then(setCars);
+      .then((items) => setCars(items?.length ? items : demoCars))
+      .catch(() => setCars(demoCars));
   useEffect(() => {
     load();
     let a = setInterval(load, 20000),
