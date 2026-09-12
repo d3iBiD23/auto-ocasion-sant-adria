@@ -1,111 +1,66 @@
 # Auto Ocasión Sant Adrià
 
-Plataforma integral para un concesionario de vehículos de ocasión: catálogo público, captación de coches y panel de gestión de inventario y solicitudes.
+## Una experiencia digital para comprar y vender vehículos de ocasión
 
-## Funcionalidades
+Auto Ocasión Sant Adrià es una web pensada para acercar el concesionario a sus clientes y hacer más sencilla la gestión diaria del negocio.
 
-- Catálogo responsive con filtros por marca, combustible y precio.
-- Fichas de vehículo con galería, formulario de interés y contacto por WhatsApp.
-- Sección **Vende tu coche** para recibir tasaciones con información y fotografías.
-- Panel privado para crear, editar, duplicar, reservar, publicar o retirar vehículos.
-- Gestión de solicitudes por estado, seguimientos y papelera recuperable.
-- Carga optimizada de imágenes: versión web y miniaturas automáticas.
-- API REST con Spring Boot, persistencia MySQL y control de acceso administrativo.
+La propuesta combina una presentación elegante del stock, contacto directo y un espacio privado desde el que el equipo puede mantener la información siempre actualizada.
 
-## Arquitectura
+## La experiencia del cliente
 
-| Capa | Tecnología |
-| --- | --- |
-| Interfaz | React + Vite |
-| API | Spring Boot + Java 17 |
-| Persistencia | MySQL + JPA/Hibernate |
-| Entorno local | Docker Compose |
+- Consulta rápida de vehículos disponibles desde ordenador, tablet o móvil.
+- Búsqueda sencilla por marca, combustible y precio.
+- Fichas completas con fotografías, características, precio y estado del vehículo.
+- Galería de imágenes cómoda para explorar cada coche.
+- Solicitud de información directamente desde el anuncio.
+- Contacto inmediato por WhatsApp o teléfono.
+- Formulario para que los particulares puedan ofrecer su vehículo al concesionario.
+- Información de ubicación, confianza y servicios de la tienda.
 
-```text
-AutoOcasionSantAdria/
-├── backend/                 # API, seguridad, datos y procesamiento de imágenes
-├── frontend/                # Aplicación React
-├── docker-compose.yml       # Servicio MySQL local
-├── iniciar-web.bat          # Inicio rápido en Windows
-├── apagar-web.bat           # Detención segura del entorno local
-└── README.md
-```
+## Gestión para el concesionario
 
-## Inicio rápido en Windows
+El panel privado está diseñado para que el día a día sea claro y práctico:
 
-1. Abre Docker Desktop y espera a que indique que está listo.
-2. Haz doble clic en `iniciar-web.bat`.
-3. Abre [http://127.0.0.1:5173](http://127.0.0.1:5173).
+- Crear, editar, duplicar y retirar vehículos.
+- Subir varias fotografías y ordenar la galería.
+- Guardar anuncios como borrador antes de publicarlos.
+- Marcar vehículos como publicados, reservados o vendidos.
+- Añadir etiquetas como «Recién llegado», «Precio ajustado» u «Oportunidad».
+- Revisar las solicitudes recibidas desde una bandeja organizada.
+- Marcar seguimientos, priorizar contactos y consultar la papelera.
+- Gestionar varias unidades a la vez con acciones masivas.
 
-El script inicia MySQL con Docker Compose y levanta API y frontend solo si no estaban activos. Para apagar el entorno, ejecuta `apagar-web.bat`; Docker Desktop permanece abierto para que el siguiente inicio sea más rápido.
+## Una imagen cuidada
 
-## Acceso desde móvil durante las pruebas
+El diseño utiliza una identidad oscura, elegante y reconocible, con el naranja corporativo como acento. La interfaz mantiene una lectura cómoda, espacios generosos y controles claros para que cada acción resulte evidente.
 
-Con el ordenador y el móvil en la misma Wi-Fi, abre en el teléfono:
+La web se adapta a distintos tamaños de pantalla sin perder información ni comodidad, especialmente en las tareas más importantes: consultar un coche, contactar y gestionar una solicitud.
 
-```text
-http://IP-LOCAL-DEL-ORDENADOR:5173
-```
+## Enfoque de negocio
 
-La IP se consulta con `ipconfig` en Windows. Esta dirección sirve únicamente dentro de la red local; para la publicación se utilizará el dominio y el alojamiento definitivos.
+El proyecto está planteado para ayudar al concesionario a:
 
-## Inicio manual
+1. Mostrar mejor cada vehículo y transmitir confianza.
+2. Recibir contactos con información útil desde el primer mensaje.
+3. Reducir tareas repetidas al mantener el stock.
+4. Dar seguimiento a las oportunidades comerciales sin perder solicitudes.
+5. Preparar una futura conexión con los principales portales de automoción.
 
-```powershell
-# 1. Base de datos
-docker compose up -d
+## Estado actual
 
-# 2. API (otra terminal)
-cd backend
-mvn spring-boot:run
+Actualmente se trata de una demo funcional con vehículos de ejemplo. El contenido, fotografías, datos legales y datos definitivos del concesionario se incorporarán antes de su publicación.
 
-# 3. Aplicación web (otra terminal)
-cd frontend
-npm install
-npm run dev
-```
+El proyecto está preparado para evolucionar hacia un dominio propio y una publicación online cuando se confirme el alojamiento definitivo.
 
-La interfaz queda disponible en `http://localhost:5173` y la API en `http://localhost:8080/api`.
+## Próximos pasos
 
-## Calidad
+- Incorporar la identidad y los datos definitivos del concesionario.
+- Revisar textos legales y política de privacidad.
+- Conectar los canales externos de publicación de anuncios.
+- Configurar el dominio y el entorno de producción.
+- Sustituir los datos de demostración por el stock real.
 
-Antes de publicar cambios, ejecuta:
+---
 
-```powershell
-cd backend
-mvn test
-
-cd ../frontend
-npm run build
-```
-
-Las pruebas cubren los flujos principales de autenticación, solicitudes, duplicados, imágenes y estados del inventario.
-
-## Variables para producción
-
-No subas credenciales al repositorio. Define las siguientes variables en el proveedor de alojamiento:
-
-```text
-DB_URL
-DB_USER
-DB_PASSWORD
-ADMIN_EMAIL
-ADMIN_PASSWORD
-UPLOAD_DIR
-VITE_WHATSAPP_PHONE
-```
-
-Las imágenes se redimensionan al subirlas a una versión de catálogo (máximo 1.600 px) y una miniatura (560 px). En producción se recomienda servirlas desde un almacenamiento/CDN con WebP o AVIF, manteniendo JPEG como compatibilidad.
-
-## Despliegue
-
-GitHub será la fuente de código y control de versiones. El despliegue público se conectará posteriormente a un proveedor con soporte para:
-
-- Frontend estático para la carpeta `frontend/dist`.
-- Servicio Java para el backend.
-- MySQL administrado y almacenamiento persistente de fotografías.
-- Variables de entorno y dominio personalizado con HTTPS.
-
-## Datos de demostración
-
-El inventario inicial contiene vehículos de muestra editables. Antes de la publicación final se deben revisar disponibilidad, precios, fichas, textos legales, datos del responsable y teléfono comercial.
+**Auto Ocasión Sant Adrià**  
+Compra, venta y gestión de vehículos de ocasión con una experiencia más clara para todos.
