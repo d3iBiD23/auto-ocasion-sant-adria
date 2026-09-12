@@ -1,40 +1,111 @@
 # Auto Ocasión Sant Adrià
 
-Aplicación full-stack para catálogo y gestión de vehículos de ocasión.
+Plataforma integral para un concesionario de vehículos de ocasión: catálogo público, captación de coches y panel de gestión de inventario y solicitudes.
 
-## Arranque en un clic
+## Funcionalidades
 
-Haz doble clic en `iniciar-web.bat`. Es la ruta rápida: usa Docker Compose para levantar MySQL y arranca API y frontend solo si no estaban ya activos. Después abre automáticamente `http://127.0.0.1:5173`.
+- Catálogo responsive con filtros por marca, combustible y precio.
+- Fichas de vehículo con galería, formulario de interés y contacto por WhatsApp.
+- Sección **Vende tu coche** para recibir tasaciones con información y fotografías.
+- Panel privado para crear, editar, duplicar, reservar, publicar o retirar vehículos.
+- Gestión de solicitudes por estado, seguimientos y papelera recuperable.
+- Carga optimizada de imágenes: versión web y miniaturas automáticas.
+- API REST con Spring Boot, persistencia MySQL y control de acceso administrativo.
 
-Para detener la aplicación, haz doble clic en `apagar-web.bat`. Detiene web, API y MySQL, pero deja Docker Desktop abierto: así el siguiente inicio es mucho más rápido y se evita el problema de sockets que puede aparecer tras cierres abruptos.
+## Arquitectura
 
-`iniciar-web.ps1` queda como recuperación automática si Docker Desktop no está disponible; también se ejecuta sin administrador.
+| Capa | Tecnología |
+| --- | --- |
+| Interfaz | React + Vite |
+| API | Spring Boot + Java 17 |
+| Persistencia | MySQL + JPA/Hibernate |
+| Entorno local | Docker Compose |
 
-## Probar desde un móvil en la misma Wi-Fi
+```text
+AutoOcasionSantAdria/
+├── backend/                 # API, seguridad, datos y procesamiento de imágenes
+├── frontend/                # Aplicación React
+├── docker-compose.yml       # Servicio MySQL local
+├── iniciar-web.bat          # Inicio rápido en Windows
+├── apagar-web.bat           # Detención segura del entorno local
+└── README.md
+```
 
-Con el ordenador encendido y la web iniciada, conecta el móvil a la misma red Wi-Fi y abre `http://192.168.1.38:5173`. La dirección puede cambiar si cambia la red; en Windows puedes verla con `ipconfig` (usa la IPv4 del adaptador Ethernet o Wi-Fi). Esta dirección es solo para pruebas dentro de tu red, no para publicar la web en Internet.
+## Inicio rápido en Windows
 
-Las solicitudes enviadas desde móvil se guardan igual que en ordenador. Los botones abren WhatsApp con el teléfono y texto preparados. Las fotos se guardan en la solicitud para el administrador; en navegadores móviles compatibles y bajo HTTPS también se ofrece el selector nativo para compartir fotos y mensaje juntos. WhatsApp no permite que una página web adjunte archivos automáticamente a un chat ya seleccionado.
+1. Abre Docker Desktop y espera a que indique que está listo.
+2. Haz doble clic en `iniciar-web.bat`.
+3. Abre [http://127.0.0.1:5173](http://127.0.0.1:5173).
 
-## Arranque manual
+El script inicia MySQL con Docker Compose y levanta API y frontend solo si no estaban activos. Para apagar el entorno, ejecuta `apagar-web.bat`; Docker Desktop permanece abierto para que el siguiente inicio sea más rápido.
 
-1. Arranca MySQL: `docker compose up -d`
-2. Inicia el API: `cd backend && mvn spring-boot:run`
-3. En otra terminal inicia la web: `cd frontend && npm install && npm run dev`
-4. Abre `http://localhost:5173`.
+## Acceso desde móvil durante las pruebas
 
-La API queda en `http://localhost:8080/api`. El perfil inicial de administración es `admin@autoocasion.local` / `Admin123!SantAdria`. En producción define `ADMIN_EMAIL` y `ADMIN_PASSWORD` como variables de entorno. Las sesiones son aleatorias y caducan en 30 minutos.
+Con el ordenador y el móvil en la misma Wi-Fi, abre en el teléfono:
 
-## Producción
+```text
+http://IP-LOCAL-DEL-ORDENADOR:5173
+```
 
-Configura `DB_URL`, `DB_USER`, `DB_PASSWORD` y `JWT_SECRET` para el backend. Define también `VITE_WHATSAPP_PHONE` para indicar el WhatsApp comercial (ahora usa temporalmente `34678773271`). Construye el frontend con `npm run build`; los ficheros resultantes quedan en `frontend/dist`.
+La IP se consulta con `ipconfig` en Windows. Esta dirección sirve únicamente dentro de la red local; para la publicación se utilizará el dominio y el alojamiento definitivos.
 
-Las fotografías subidas se redimensionan automáticamente a una versión web (máximo 1.600 px) y a una miniatura de 560 px; el catálogo usa las miniaturas y solo carga la imagen grande al abrir la ficha. Para el despliegue público, configura el servidor/CDN para convertir esas imágenes JPEG optimizadas a WebP o AVIF según admita el navegador, conservando JPEG como compatibilidad. Así no se añade procesamiento pesado en el móvil ni se rompen navegadores antiguos.
+## Inicio manual
 
-## Contacto de clientes
+```powershell
+# 1. Base de datos
+docker compose up -d
 
-Cada ficha de vehículo incluye un formulario de interés para solicitar su compra. La sección pública **Vende tu coche** es independiente: recopila los datos, descripción y hasta diez fotos del coche que un particular quiere vender al concesionario. Ambas solicitudes se guardan y aparecen separadas en el panel de administración, desde donde se pueden revisar, marcar como atendidas y responder por teléfono o WhatsApp.
+# 2. API (otra terminal)
+cd backend
+mvn spring-boot:run
 
-## Inventario inicial
+# 3. Aplicación web (otra terminal)
+cd frontend
+npm install
+npm run dev
+```
 
-Los vehículos de ejemplo se han transcrito de la información pública del concesionario en Coches.net y sirven como carga inicial editable. Las imágenes son ilustrativas (Unsplash), para evitar reutilizar fotografías de terceros. Revisa disponibilidad, precio y especificaciones antes de publicar.
+La interfaz queda disponible en `http://localhost:5173` y la API en `http://localhost:8080/api`.
+
+## Calidad
+
+Antes de publicar cambios, ejecuta:
+
+```powershell
+cd backend
+mvn test
+
+cd ../frontend
+npm run build
+```
+
+Las pruebas cubren los flujos principales de autenticación, solicitudes, duplicados, imágenes y estados del inventario.
+
+## Variables para producción
+
+No subas credenciales al repositorio. Define las siguientes variables en el proveedor de alojamiento:
+
+```text
+DB_URL
+DB_USER
+DB_PASSWORD
+ADMIN_EMAIL
+ADMIN_PASSWORD
+UPLOAD_DIR
+VITE_WHATSAPP_PHONE
+```
+
+Las imágenes se redimensionan al subirlas a una versión de catálogo (máximo 1.600 px) y una miniatura (560 px). En producción se recomienda servirlas desde un almacenamiento/CDN con WebP o AVIF, manteniendo JPEG como compatibilidad.
+
+## Despliegue
+
+GitHub será la fuente de código y control de versiones. El despliegue público se conectará posteriormente a un proveedor con soporte para:
+
+- Frontend estático para la carpeta `frontend/dist`.
+- Servicio Java para el backend.
+- MySQL administrado y almacenamiento persistente de fotografías.
+- Variables de entorno y dominio personalizado con HTTPS.
+
+## Datos de demostración
+
+El inventario inicial contiene vehículos de muestra editables. Antes de la publicación final se deben revisar disponibilidad, precios, fichas, textos legales, datos del responsable y teléfono comercial.

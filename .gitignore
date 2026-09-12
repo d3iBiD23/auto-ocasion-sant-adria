@@ -4,7 +4,7 @@ frontend/dist/
 backend/target/
 backend/uploads/
 
-# Local editor, test and Codex artifacts
+# Local editor, test and temporary artifacts
 .codex-remote-attachments/
 .site-package-*/
 *.zip
