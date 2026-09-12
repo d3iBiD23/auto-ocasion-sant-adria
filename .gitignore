@@ -1,0 +1,17 @@
+# Dependencies and generated application output
+frontend/node_modules/
+frontend/dist/
+backend/target/
+backend/uploads/
+
+# Local editor, test and Codex artifacts
+.codex-remote-attachments/
+.site-package-*/
+*.zip
+*.tar.gz
+lead-*-response.json
+lead-*-test.json
+
+# Operating-system files
+.DS_Store
+Thumbs.db

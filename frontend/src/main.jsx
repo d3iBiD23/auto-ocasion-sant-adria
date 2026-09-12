@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { FaWhatsapp } from "react-icons/fa6";
 import {
   ArrowLeft,
   ArrowRight,
@@ -20,6 +21,7 @@ import {
   ImagePlus,
   Upload,
   Camera,
+  Copy,
   MessageCircle,
   Phone,
 } from "lucide-react";
@@ -278,6 +280,11 @@ const VEHICLE_STATUSES = {
   PUBLISHED: "Publicado",
   RESERVED: "Reservado",
   SOLD: "Vendido",
+};
+const VEHICLE_HIGHLIGHTS = {
+  NEW: "Recién llegado",
+  PRICE: "Precio ajustado",
+  OPPORTUNITY: "Oportunidad",
 };
 const PUBLICATION_CHANNELS = {
   COCHES_NET: "Coches.net",
@@ -578,13 +585,54 @@ function FullscreenGallery({ images = [], label, startIndex = 0, close }) {
     </section>
   );
 }
+function LegalModal({ page, close }) {
+  const content = {
+    privacy: {
+      title: "Política de privacidad",
+      body: <>
+        <p className="legal-demo">VERSIÓN DEMOSTRACIÓN · Antes de publicar, completar razón social, NIF/CIF, domicilio fiscal y email de privacidad.</p>
+        <h3>Responsable</h3><p>Auto Ocasión Sant Adrià es el nombre comercial mostrado en esta demo. El responsable jurídico definitivo y sus datos de contacto se incorporarán antes de su publicación.</p>
+        <h3>Para qué usamos los datos</h3><p>Gestionar solicitudes de información sobre vehículos, valorar vehículos ofrecidos por particulares, contactar con la persona interesada y hacer seguimiento de la solicitud.</p>
+        <h3>Qué datos recogemos y base jurídica</h3><p>Nombre, teléfono, email si se facilita, datos del vehículo, mensaje y fotografías. La base es el consentimiento marcado al enviar el formulario y las actuaciones previas solicitadas por la persona usuaria.</p>
+        <h3>Destinatarios y conservación</h3><p>No se venden los datos. WhatsApp recibe la información únicamente si la persona decide abrirlo y enviar el mensaje. La versión final identificará el alojamiento y los encargados que correspondan. Los datos se conservarán mientras se gestione la solicitud y durante los plazos legales aplicables.</p>
+        <h3>Derechos</h3><p>Podrás solicitar acceso, rectificación, supresión, oposición, limitación y portabilidad, retirar el consentimiento y reclamar ante la AEPD. El correo para ejercerlos se añadirá antes de publicar esta web.</p>
+      </>,
+    },
+    cookies: {
+      title: "Política de cookies",
+      body: <>
+        <p className="legal-demo">VERSIÓN DEMOSTRACIÓN · Revisar de nuevo al instalar analítica, publicidad o servicios de terceros adicionales.</p>
+        <h3>Cookies y almacenamiento actual</h3><p>La parte pública de esta demo no incorpora analítica, píxeles publicitarios ni cookies de publicidad. Por ello no muestra un banner de aceptación.</p>
+        <h3>Acceso de administración</h3><p>El panel guarda un identificador de sesión técnico en el almacenamiento local del navegador para mantener el acceso del administrador durante una sesión. No se usa para seguir a visitantes ni para publicidad.</p>
+        <h3>Servicios externos</h3><p>Los enlaces a WhatsApp, Maps, Coches.net y Milanuncios solo se abren si la persona pulsa voluntariamente. Sus políticas se aplican al salir de esta web.</p>
+        <h3>Futuras modificaciones</h3><p>Si se añade medición de visitas o publicidad, se actualizará esta política y se solicitará consentimiento antes de activar las cookies no necesarias.</p>
+      </>,
+    },
+    legal: {
+      title: "Aviso legal",
+      body: <>
+        <p className="legal-demo">VERSIÓN DEMOSTRACIÓN · Pendiente de completar con los datos mercantiles reales antes de publicar.</p>
+        <h3>Identificación</h3><p>Este sitio se presenta bajo la marca Auto Ocasión Sant Adrià. La identificación completa del titular, NIF/CIF, domicilio fiscal y email se incorporarán antes de su puesta en producción.</p>
+        <h3>Finalidad del sitio</h3><p>Mostrar vehículos de ocasión y permitir solicitar información o una valoración para vender un vehículo. La disponibilidad, precios y condiciones de cada vehículo deben confirmarse con el concesionario.</p>
+        <h3>Propiedad y uso</h3><p>Los contenidos, fotografías y signos distintivos están destinados a la presentación comercial del concesionario. No se permite su reproducción o uso no autorizado.</p>
+      </>,
+    },
+  }[page];
+  return <div className="legal-modal" role="dialog" aria-modal="true" aria-labelledby="legal-title" onClick={close}>
+    <article onClick={(event) => event.stopPropagation()}>
+      <button type="button" aria-label="Cerrar" onClick={close}><X /></button>
+      <p className="kicker">INFORMACIÓN LEGAL</p><h2 id="legal-title">{content.title}</h2>{content.body}
+    </article>
+  </div>;
+}
 function App() {
   const [cars, setCars] = useState([]),
-    [filter, setFilter] = useState({ brand: "", fuel: "", price: "" }),
+    [filter, setFilter] = useState({ brands: [], fuel: "", price: "" }),
     [detail, setDetail] = useState(),
     [admin, setAdmin] = useState(false),
     [open, setOpen] = useState(false),
     [filtersOpen, setFiltersOpen] = useState(false),
+    [legalPage, setLegalPage] = useState(null),
     [review, setReview] = useState(0);
   const reviews = [
     ["Alejandro", "Todo muy bien y rápido. Vendedor muy amable y atento en todo momento."],
@@ -617,6 +665,23 @@ function App() {
     window.addEventListener("popstate", closeVehicleOnBack);
     return () => window.removeEventListener("popstate", closeVehicleOnBack);
   }, []);
+  useEffect(() => {
+    const openPrivatePanel = () => {
+      if (window.location.hash !== "#admin") return;
+      // El acceso privado no debe dejar una URL reutilizable en el historial.
+      window.history.replaceState(
+        window.history.state,
+        "",
+        `${window.location.pathname}${window.location.search}`,
+      );
+      setDetail(undefined);
+      setOpen(false);
+      setAdmin(true);
+    };
+    openPrivatePanel();
+    window.addEventListener("hashchange", openPrivatePanel);
+    return () => window.removeEventListener("hashchange", openPrivatePanel);
+  }, []);
   const openDetail = (vehicle) => {
     window.history.pushState(
       { ...(window.history.state || {}), autoOcasionVehicleDetail: true },
@@ -631,22 +696,29 @@ function App() {
   };
   let shown = cars
     .filter((v) => ["PUBLISHED", "RESERVED"].includes(vehicleStatus(v)))
-    .filter((v) => !filter.brand || v.brand === filter.brand)
+    .filter((v) => !filter.brands.length || filter.brands.includes(v.brand))
     .filter((v) => !filter.fuel || v.fuel === filter.fuel)
     .filter((v) => !filter.price || v.price <= filter.price);
   if (admin)
-    return <Admin cars={cars} refresh={load} close={() => setAdmin(false)} />;
+    return <Admin cars={cars} refresh={load} close={() => {
+      localStorage.removeItem("token");
+      window.history.replaceState(
+        window.history.state,
+        "",
+        `${window.location.pathname}${window.location.search}`,
+      );
+      setAdmin(false);
+    }} />;
   return (
     <main>
       <header>
         <Brand />
         <nav className={open ? "open" : ""} onClick={() => setOpen(false)}>
           <a href="#stock">Stock</a>
-          <a href="#sell">Vende tu coche</a>
           <a href="#trust">Confianza</a>
           <a href="#visit">Visítanos</a>
-          <a className="navbox" href="#stock">
-            Ver vehículos <ArrowUpRight size={14} />
+          <a className="navbox" href="#sell">
+            Vende tu coche <ArrowUpRight size={14} />
           </a>
         </nav>
         <button
@@ -658,6 +730,12 @@ function App() {
           {open ? <X /> : <Menu />}
         </button>
       </header>
+      <div className="marquee" aria-label="Vehículos revisados, garantía incluida, trato directo y entrega inmediata">
+        <div className="marquee-track">
+          <span>VEHÍCULOS REVISADOS　✦　GARANTÍA INCLUIDA　✦　TRATO DIRECTO　✦　ENTREGA INMEDIATA</span>
+          <span aria-hidden="true">VEHÍCULOS REVISADOS　✦　GARANTÍA INCLUIDA　✦　TRATO DIRECTO　✦　ENTREGA INMEDIATA</span>
+        </div>
+      </div>
       <section className="hero">
         <div>
           <p className="kicker">VEHÍCULOS DE OCASIÓN · BARCELONA</p>
@@ -666,17 +744,11 @@ function App() {
             <br />
             <i>Sin ruido.</i>
           </h1>
-          <a className="button" href="#stock">
-            Explorar stock
+          <a className="button hero-stock-button" href="#stock">
+            Ver vehículos <ChevronDown size={21} />
           </a>
         </div>
       </section>
-      <div className="marquee" aria-label="Vehículos revisados, garantía incluida, trato directo y entrega inmediata">
-        <div className="marquee-track">
-          <span>VEHÍCULOS REVISADOS　✦　GARANTÍA INCLUIDA　✦　TRATO DIRECTO　✦　ENTREGA INMEDIATA</span>
-          <span aria-hidden="true">VEHÍCULOS REVISADOS　✦　GARANTÍA INCLUIDA　✦　TRATO DIRECTO　✦　ENTREGA INMEDIATA</span>
-        </div>
-      </div>
       <section className="inventory" id="stock">
         <div className="heading">
           <div>
@@ -696,15 +768,34 @@ function App() {
             <SlidersHorizontal size={18} />
           </button>
           <div className="filter-panel">
-            <select
-              value={filter.brand}
-              onChange={(e) => setFilter({ ...filter, brand: e.target.value })}
-            >
-              <option value="">Marca</option>
-              {[...new Set(cars.map((v) => v.brand))].map((x) => (
-                <option key={x}>{x}</option>
-              ))}
-            </select>
+            <details className="brand-multiselect">
+              <summary>
+                {filter.brands.length
+                  ? `${filter.brands.length} marca${filter.brands.length > 1 ? "s" : ""}`
+                  : "Marcas"}
+              </summary>
+              <div>
+                {[...new Set(cars.map((vehicle) => vehicle.brand))]
+                  .sort()
+                  .map((brand) => (
+                    <label key={brand}>
+                      <input
+                        type="checkbox"
+                        checked={filter.brands.includes(brand)}
+                        onChange={() =>
+                          setFilter((current) => ({
+                            ...current,
+                            brands: current.brands.includes(brand)
+                              ? current.brands.filter((item) => item !== brand)
+                              : [...current.brands, brand],
+                          }))
+                        }
+                      />
+                      {brand}
+                    </label>
+                  ))}
+              </div>
+            </details>
             <select
               value={filter.fuel}
               onChange={(e) => setFilter({ ...filter, fuel: e.target.value })}
@@ -727,7 +818,7 @@ function App() {
             <button
               className="filter-clear"
               type="button"
-              onClick={() => setFilter({ brand: "", fuel: "", price: "" })}
+              onClick={() => setFilter({ brands: [], fuel: "", price: "" })}
             >
               Limpiar
             </button>
@@ -744,6 +835,9 @@ function App() {
               />
               {vehicleStatus(v) === "RESERVED" && (
                 <span className="vehicle-reserved-badge">Reservado</span>
+              )}
+              {v.highlight && vehicleStatus(v) !== "SOLD" && (
+                <span className="vehicle-highlight-badge">{VEHICLE_HIGHLIGHTS[v.highlight] || v.highlight}</span>
               )}
               <div className="info">
                 <h3>{v.brand} {v.model}</h3>
@@ -762,7 +856,7 @@ function App() {
           ))}
         </div>
       </section>
-      <SellCar />
+      <SellCar onOpenPrivacy={() => setLegalPage("privacy")} />
       <section className="promise">
         <p className="kicker">NUESTRA FORMA DE TRABAJAR</p>
         <div>
@@ -880,30 +974,37 @@ function App() {
             Milanuncios ↗
           </a>
         </span>
+        <span className="legal-links">
+          <button type="button" onClick={() => setLegalPage("legal")}>Aviso legal</button>
+          <button type="button" onClick={() => setLegalPage("privacy")}>Privacidad</button>
+          <button type="button" onClick={() => setLegalPage("cookies")}>Cookies</button>
+        </span>
       </footer>
       <div className="mobile-contact-bar" aria-label="Contacto rápido">
-        <a href={`tel:+${WHATSAPP_PHONE}`} aria-label="Llamar al concesionario">
-          <Phone /> Llamar
-        </a>
         <a
           href={`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent("Hola, me gustaría recibir información.")}`}
           target="_blank"
           rel="noreferrer"
           aria-label="Escribir por WhatsApp"
         >
-          <MessageCircle /> WhatsApp
+          <FaWhatsapp aria-hidden="true" />
         </a>
       </div>
       <button
         className="private"
-        onClick={() => setAdmin(true)}
+        onClick={() => {
+          setDetail(undefined);
+          setOpen(false);
+          setAdmin(true);
+        }}
         aria-label="Acceso administración"
       />
-      {detail && <Detail car={detail} close={closeDetail} />}
+      {detail && <Detail car={detail} close={closeDetail} onOpenPrivacy={() => setLegalPage("privacy")} />}
+      {legalPage && <LegalModal page={legalPage} close={() => setLegalPage(null)} />}
     </main>
   );
 }
-function SellCar() {
+function SellCar({ onOpenPrivacy }) {
   const [status, setStatus] = useState(""),
     [photoCount, setPhotoCount] = useState(0),
     [errors, setErrors] = useState({}),
@@ -1304,7 +1405,7 @@ function SellCar() {
           <input name="consent" type="checkbox" aria-invalid={Boolean(errors.consent)} />
           <span>
             Autorizo el uso de mis datos para gestionar esta solicitud y acepto
-            la política de privacidad.
+            la <button type="button" className="legal-inline" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onOpenPrivacy(); }}>política de privacidad</button>.
           </span>
           {errors.consent && <small className="field-error">{errors.consent}</small>}
         </label>
@@ -1316,7 +1417,7 @@ function SellCar() {
     </section>
   );
 }
-function InterestForm({ car }) {
+function InterestForm({ car, onOpenPrivacy }) {
   const [status, setStatus] = useState(""),
     [errors, setErrors] = useState({});
   const reserved = vehicleStatus(car) === "RESERVED";
@@ -1416,7 +1517,7 @@ function InterestForm({ car }) {
       <textarea name="message" placeholder={reserved ? "¿Quieres que te avisemos si queda disponible?" : "¿Quieres preguntarnos algo?"} />
       <label className={`interest-consent ${errors.consent ? "field-invalid" : ""}`}>
         <input name="consent" type="checkbox" aria-invalid={Boolean(errors.consent)} />
-        <span>Acepto el uso de mis datos para atender mi solicitud.</span>
+        <span>Acepto el uso de mis datos para atender mi solicitud y la <button type="button" className="legal-inline" onClick={(event) => { event.preventDefault(); event.stopPropagation(); onOpenPrivacy(); }}>política de privacidad</button>.</span>
         {errors.consent && <small className="field-error">{errors.consent}</small>}
       </label>
       <button className="button">
@@ -1426,7 +1527,7 @@ function InterestForm({ car }) {
     </form>
   );
 }
-function Detail({ car, close }) {
+function Detail({ car, close, onOpenPrivacy }) {
   const [fullscreenIndex, setFullscreenIndex] = useState(null);
   useEffect(() => {
     // El anuncio se abre sobre la página. Al bloquear el documento evitamos que
@@ -1469,7 +1570,7 @@ function Detail({ car, close }) {
             {car.power} CV　·　{car.transmission}
           </p>
           <p>{car.description}</p>
-          <InterestForm car={car} />
+          <InterestForm car={car} onOpenPrivacy={onOpenPrivacy} />
         </div>
       </article>
       {fullscreenIndex !== null && (
@@ -1494,6 +1595,7 @@ const blank = {
   power: "",
   transmission: "Manual",
   status: "PUBLISHED",
+  highlight: "",
   description: "",
   images: [fallback],
 };
@@ -1501,27 +1603,24 @@ function AdminOverview({ cars }) {
   const count = (status) =>
     cars.filter((vehicle) => vehicleStatus(vehicle) === status).length;
   return (
-    <section className="admin-summary" aria-label="Resumen del inventario">
-      <article>
-        <small>PUBLICADOS</small>
-        <b>{count("PUBLISHED")}</b>
-        <span>vehículos activos</span>
-      </article>
-      <article>
-        <small>RESERVADOS</small>
-        <b>{count("RESERVED")}</b>
-        <span>pendientes de entrega</span>
-      </article>
-      <article>
-        <small>BORRADORES</small>
-        <b>{count("DRAFT")}</b>
-        <span>fichas pendientes de publicar</span>
-      </article>
-      <article>
-        <small>VENDIDOS</small>
-        <b>{count("SOLD")}</b>
-        <span>histórico del catálogo</span>
-      </article>
+    <dl className="admin-summary" aria-label="Estado del inventario">
+      <div><dt>Publicados</dt><dd>{count("PUBLISHED")}</dd></div>
+      <div><dt>Reservados</dt><dd>{count("RESERVED")}</dd></div>
+      <div><dt>Borradores</dt><dd>{count("DRAFT")}</dd></div>
+      <div><dt>Vendidos</dt><dd>{count("SOLD")}</dd></div>
+    </dl>
+  );
+}
+function AdminToday({ cars, requests }) {
+  const reserved = cars.filter((vehicle) => vehicleStatus(vehicle) === "RESERVED").length;
+  return (
+    <section className="admin-today" aria-label="Resumen de hoy">
+      <p className="kicker">HOY</p>
+      <div>
+        <article><b>{requests.new}</b><span>Nuevas solicitudes</span></article>
+        <article><b>{requests.followUps}</b><span>Seguimientos pendientes</span></article>
+        <article><b>{reserved}</b><span>Vehículos reservados</span></article>
+      </div>
     </section>
   );
 }
@@ -1535,7 +1634,9 @@ function Admin({ cars, refresh, close }) {
     [ageFilter, setAgeFilter] = useState("ALL"),
     [sortBy, setSortBy] = useState("NEWEST"),
     [selectedVehicleIds, setSelectedVehicleIds] = useState([]),
+    [selectionMode, setSelectionMode] = useState(false),
     [newRequestCount, setNewRequestCount] = useState(0),
+    [todayRequests, setTodayRequests] = useState({ new: 0, followUps: 0 }),
     [activeTab, setActiveTab] = useState("inventory"),
     [mobileSectionsOpen, setMobileSectionsOpen] = useState(false);
   const headers = {
@@ -1573,11 +1674,15 @@ function Admin({ cars, refresh, close }) {
         sell.ok ? sell.json() : [],
         interest.ok ? interest.json() : [],
       ]);
-      setNewRequestCount(
-        [...sellItems, ...interestItems].filter(
-          (lead) => (lead.status || "NEW") === "NEW",
+      const leads = [...sellItems, ...interestItems];
+      const newCount = leads.filter((lead) => (lead.status || "NEW") === "NEW").length;
+      setNewRequestCount(newCount);
+      setTodayRequests({
+        new: newCount,
+        followUps: leads.filter((lead) =>
+          (lead.status || "NEW") !== "CLOSED" && Boolean(lead.nextActionAt),
         ).length,
-      );
+      });
     } catch {
       // The inbox remains available even if its counter cannot refresh briefly.
     }
@@ -1646,6 +1751,25 @@ function Admin({ cars, refresh, close }) {
     setSelectedVehicleIds((current) =>
       current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
     );
+  const toggleSelectionMode = () => {
+    setSelectionMode((active) => !active);
+    setSelectedVehicleIds([]);
+  };
+  const duplicateVehicle = (vehicle) => {
+    setNotice("");
+    setForm({
+      ...vehicle,
+      id: undefined,
+      sold: false,
+      status: "DRAFT",
+      highlight: "",
+      createdAt: undefined,
+      updatedAt: undefined,
+      publishedAt: undefined,
+      publications: [],
+      images: vehicle.images?.length ? [...vehicle.images] : [fallback],
+    });
+  };
   const bulkUpdateStatus = async (status, label) => {
     if (!selectedVehicleIds.length) return;
     if (!confirm(`${label} ${selectedVehicleIds.length} vehículo(s)?`)) return;
@@ -1730,28 +1854,40 @@ function Admin({ cars, refresh, close }) {
           Solicitudes {newRequestCount > 0 && <span className="admin-lead-count">{newRequestCount}</span>}
         </button>
       </nav>
-      <section className="inventory-overview persistent-overview" aria-label="Resumen del inventario">
-        <div>
-          <p className="kicker">RESUMEN</p>
-          <h2>Resumen de inventario</h2>
+      <div className="admin-workspace">
+      <aside className="admin-dashboard" aria-label="Resumen de actividad">
+        <div className="admin-dashboard-heading">
+          <p className="kicker">PANEL</p>
+          <h2>Resumen</h2>
+          <small>Actividad y stock en un vistazo.</small>
         </div>
-        <AdminOverview cars={cars} />
-      </section>
+        <AdminToday cars={cars} requests={todayRequests} />
+        <section className="admin-stock-summary">
+          <small>ESTADO DEL STOCK</small>
+          <AdminOverview cars={cars} />
+        </section>
+      </aside>
+      <main className="admin-content">
       {activeTab === "inventory" ? <>
       <div className="admin-section-heading ahead">
         <div>
           <p className="kicker">INVENTARIO</p>
           <h2>Vehículos</h2>
         </div>
-        <button
-          className="button"
-          onClick={() => {
-            setNotice("");
-            setForm({ ...blank, images: [fallback] });
-          }}
-        >
-          <Plus /> Añadir vehículo
-        </button>
+        <div className="inventory-heading-actions">
+          <button type="button" className={selectionMode ? "selection-toggle active" : "selection-toggle"} onClick={toggleSelectionMode}>
+            {selectionMode ? "Cancelar selección" : "Seleccionar"}
+          </button>
+          <button
+            className="button"
+            onClick={() => {
+              setNotice("");
+              setForm({ ...blank, images: [fallback] });
+            }}
+          >
+            <Plus /> Añadir vehículo
+          </button>
+        </div>
       </div>
       {notice && <p className="notice">{notice}</p>}
       <div className="admin-tools">
@@ -1824,18 +1960,18 @@ function Admin({ cars, refresh, close }) {
           token={token}
         />
       )}
-      <div className="adminlist">
+      <div className={`adminlist ${selectionMode ? "selection-active" : ""}`}>
         {filtered.map((v) => {
           const missing = vehicleReadiness(v), age = stockAge(v), isSold = vehicleStatus(v) === "SOLD", isReserved = vehicleStatus(v) === "RESERVED";
           return <div key={v.id}>
-            <label className="admin-select">
+            {selectionMode && <label className="admin-select">
               <input
                 type="checkbox"
                 checked={selectedVehicleIds.includes(v.id)}
                 onChange={() => toggleVehicleSelection(v.id)}
                 aria-label={`Seleccionar ${v.brand} ${v.model}`}
               />
-            </label>
+            </label>}
             <Gallery images={v.images} small />
             <p>
               <b>
@@ -1867,6 +2003,13 @@ function Admin({ cars, refresh, close }) {
                 }}
               >
                 <Edit3 /> Editar ficha
+              </button>
+              <button
+                className="duplicate-vehicle"
+                aria-label={`Duplicar ${v.brand} ${v.model} como borrador`}
+                onClick={() => duplicateVehicle(v)}
+              >
+                <Copy /> Duplicar como borrador
               </button>
               {!isSold && <button
                 className={isReserved ? "remove-reservation" : "mark-reserved"}
@@ -1909,13 +2052,18 @@ function Admin({ cars, refresh, close }) {
         })}
       </div>
       </> : <LeadInbox token={token} onLeadsChanged={loadNewRequestCount} />}
+      </main>
+      </div>
+      <footer className="admin-footer">
+        <span>Auto Ocasión Sant Adrià · Panel de gestión</span>
+        <small>Los cambios del inventario y las solicitudes se guardan en tiempo real.</small>
+      </footer>
     </section>
   );
 }
 function LeadInbox({ token, onLeadsChanged }) {
   const [sellLeads, setSellLeads] = useState([]),
     [interests, setInterests] = useState([]),
-    [selectedPhone, setSelectedPhone] = useState(""),
     [previewImage, setPreviewImage] = useState(""),
     [view, setView] = useState("active"),
     [statusFilter, setStatusFilter] = useState("ALL"),
@@ -2018,13 +2166,6 @@ function LeadInbox({ token, onLeadsChanged }) {
       type: "Compra",
     })),
   ];
-  const reminders = allLeads
-    .filter((lead) => lead.nextActionAt)
-    .sort((a, b) => new Date(a.nextActionAt) - new Date(b.nextActionAt))
-    .slice(0, 5);
-  const history = selectedPhone
-    ? allLeads.filter((lead) => lead.phone === selectedPhone)
-    : [];
   const matchesLeadFilter = (lead) =>
     (statusFilter === "ALL" || (lead.status || "NEW") === statusFilter) &&
     (!dueOnly || (lead.nextActionAt && new Date(lead.nextActionAt) <= new Date()));
@@ -2056,14 +2197,14 @@ function LeadInbox({ token, onLeadsChanged }) {
           <button
             type="button"
             className={view === "active" ? "active" : ""}
-            onClick={() => { setView("active"); setSelectedPhone(""); setDueOnly(false); }}
+            onClick={() => { setView("active"); setDueOnly(false); }}
           >
             Activas
           </button>
           <button
             type="button"
             className={view === "trash" ? "active" : ""}
-            onClick={() => { setView("trash"); setSelectedPhone(""); setDueOnly(false); }}
+            onClick={() => { setView("trash"); setDueOnly(false); }}
           >
             Papelera
           </button>
@@ -2086,7 +2227,7 @@ function LeadInbox({ token, onLeadsChanged }) {
           className={leadTypeView === "SELL" ? "active" : ""}
           onClick={() => setLeadTypeView("SELL")}
         >
-          Quieren venderte un coche <span>{visibleSellLeads.length}</span>
+          Quieren vender su coche <span>{visibleSellLeads.length}</span>
         </button>
         <button
           type="button"
@@ -2097,26 +2238,21 @@ function LeadInbox({ token, onLeadsChanged }) {
         </button>
       </div>
       {view === "active" && (
-        <section className="lead-work-queue" aria-label="Atajos de trabajo">
-          <div>
-            <p className="kicker">COLA DE TRABAJO</p>
-            <b>¿Qué quieres revisar?</b>
-          </div>
+        <section className="lead-inbox-filters" aria-label="Prioridad de solicitudes">
+          <span>Mostrar</span>
           <button
             type="button"
             className={statusFilter === "NEW" && !dueOnly ? "active" : ""}
             onClick={() => { setStatusFilter("NEW"); setDueOnly(false); }}
           >
-            <span>Nuevas por atender</span>
-            <small>{newLeadCount} sin gestionar</small>
+            Por atender <b>{newLeadCount}</b>
           </button>
           <button
             type="button"
             className={dueOnly ? "active" : ""}
             onClick={() => { setStatusFilter("ALL"); setDueOnly(true); }}
           >
-            <span>Tareas de seguimiento</span>
-            <small>{dueLeadCount} vencidas o para hoy</small>
+            Seguimiento de hoy <b>{dueLeadCount}</b>
           </button>
           <button
             type="button"
@@ -2125,34 +2261,6 @@ function LeadInbox({ token, onLeadsChanged }) {
           >
             Ver todas
           </button>
-        </section>
-      )}
-      {reminders.length > 0 && (
-        <section className="lead-reminders">
-          <b>Próximos pasos</b>
-          {reminders.map((lead) => (
-            <button
-              key={`${lead.kind}-${lead.id}`}
-              onClick={() => setSelectedPhone(lead.phone)}
-            >
-              <span>{when(lead.nextActionAt)}</span>
-              {lead.nextActionText || `Contactar con ${lead.name}`}
-            </button>
-          ))}
-        </section>
-      )}
-      {selectedPhone && (
-        <section className="contact-history">
-          <div>
-            <b>Historial de {selectedPhone}</b>
-            <button onClick={() => setSelectedPhone("")}>Cerrar</button>
-          </div>
-          {history.map((lead) => (
-            <p key={`${lead.kind}-${lead.id}`}>
-              <span>{lead.type}</span> · {lead.source || lead.vehicleName} ·{" "}
-              {when(lead.createdAt)} · {LEAD_STATUSES[lead.status || "NEW"]}
-            </p>
-          ))}
         </section>
       )}
       <div className="lead-columns single">
@@ -2276,7 +2384,9 @@ function LeadInbox({ token, onLeadsChanged }) {
           close={() => setManagedLead(null)}
           updateLead={updateLead}
           anonymizeLead={anonymizeLead}
-          showHistory={() => setSelectedPhone(managedLead.lead.phone)}
+          contactHistory={allLeads
+            .filter((lead) => lead.phone === managedLead.lead.phone)
+            .map((lead) => ({ ...lead, displayDate: when(lead.createdAt) }))}
           deletedView={view === "trash"}
           moveToTrash={async (kind, id) => {
             const moved = await moveToTrash(kind, id);
@@ -2305,7 +2415,7 @@ function LeadDrawer({
   close,
   updateLead,
   anonymizeLead,
-  showHistory,
+  contactHistory,
   deletedView,
   moveToTrash,
   restoreLead,
@@ -2372,12 +2482,23 @@ function LeadDrawer({
             </div>
           </section>
         )}
+        {contactHistory.length > 1 && (
+          <details className="lead-drawer-history">
+            <summary>Historial de este contacto ({contactHistory.length})</summary>
+            <div>
+              {contactHistory.map((item) => (
+                <p key={`${item.kind}-${item.id}`}>
+                  <b>{item.type}</b> · {item.source || item.vehicleName} · {item.displayDate} · {LEAD_STATUSES[item.status || "NEW"]}
+                </p>
+              ))}
+            </div>
+          </details>
+        )}
         <LeadManagement
           lead={lead}
           kind={kind}
           updateLead={updateLead}
           anonymizeLead={anonymizeLead}
-          showHistory={showHistory}
           deletedView={deletedView}
           moveToTrash={moveToTrash}
           restoreLead={restoreLead}
@@ -2392,7 +2513,6 @@ function LeadManagement({
   kind,
   updateLead,
   anonymizeLead,
-  showHistory,
   deletedView,
   moveToTrash,
   restoreLead,
@@ -2428,6 +2548,20 @@ function LeadManagement({
     setSaved(true);
     window.setTimeout(() => setSaved(false), 2600);
   };
+  const closeManagement = async () => {
+    const didSave = await updateLead(kind, lead.id, {
+      ...draft,
+      status: "CLOSED",
+      nextActionAt: "",
+      nextActionText: "",
+    });
+    if (!didSave) return;
+    setDraft((current) => ({ ...current, status: "CLOSED", nextActionAt: "", nextActionText: "" }));
+    setSaved(true);
+    window.setTimeout(() => setSaved(false), 2600);
+  };
+  const focusNextAction = () =>
+    document.querySelector(".lead-next-action")?.focus();
   if (deletedView)
     return (
       <section className="lead-archive-actions">
@@ -2483,6 +2617,7 @@ function LeadManagement({
         />
       </label>
       <input
+        className="lead-next-action"
         value={draft.nextActionText}
         onChange={(e) => change("nextActionText", e.target.value)}
         placeholder="Ej. Llamar para cerrar tasación"
@@ -2524,11 +2659,30 @@ function LeadManagement({
         </a>
       </div>
       <div className="lead-primary-actions">
-        <button type="button" className="save-followup" onClick={saveFollowUp}>
+        {draft.status === "NEW" ? (
+          <a
+            className="save-followup"
+            href={`https://wa.me/${lead.phone}?text=${encodeURIComponent(`Hola ${lead.name}, hemos recibido tu solicitud y te contactamos para ayudarte.`)}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Contactar por WhatsApp
+          </a>
+        ) : draft.status === "CONTACTED" ? (
+          <button type="button" className="save-followup" onClick={focusNextAction}>
+            Programar llamada
+          </button>
+        ) : draft.status === "CLOSED" ? (
+          <button type="button" className="save-followup" onClick={() => change("status", "CONTACTED")}>
+            Reabrir gestión
+          </button>
+        ) : (
+          <button type="button" className="save-followup" onClick={closeManagement}>
+            Cerrar gestión
+          </button>
+        )}
+        <button type="button" className="save-changes" onClick={saveFollowUp}>
           Guardar cambios
-        </button>
-        <button type="button" className="history-lead" onClick={showHistory}>
-          Ver historial del contacto
         </button>
       </div>
       {saved && <p className="lead-save-confirmation">Cambios guardados correctamente.</p>}
@@ -2814,6 +2968,18 @@ function VehicleForm({ vehicle: v, setVehicle, save, cancel, refresh, token }) {
             ))}
           </select>
         </label>
+        <label>
+          Etiqueta visible
+          <select
+            value={v.highlight || ""}
+            onChange={(e) => change("highlight", e.target.value)}
+          >
+            <option value="">Sin etiqueta</option>
+            {Object.entries(VEHICLE_HIGHLIGHTS).map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </select>
+        </label>
         {vehicleStatus(v) === "PUBLISHED" && (
           <p className="publish-confirmation wide">
             Al pulsar “Publicar ahora”, esta ficha será visible inmediatamente en la web.
@@ -3093,20 +3259,9 @@ function VehiclePhotos({ vehicle: v, setVehicle, refresh }) {
 }
 function PrivateRoute() {
   useEffect(() => {
-    const wipe = () => localStorage.removeItem("token"),
-      open = () => {
-        if (location.hash === "#admin") {
-          wipe();
-          requestAnimationFrame(() =>
-            document.querySelector(".private")?.click(),
-          );
-        }
-      };
-    open();
-    addEventListener("hashchange", open);
+    const wipe = () => localStorage.removeItem("token");
     addEventListener("beforeunload", wipe);
     return () => {
-      removeEventListener("hashchange", open);
       removeEventListener("beforeunload", wipe);
     };
   }, []);
