@@ -1,0 +1,21 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: auto-ocasion-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: auto_ocasion
+      MYSQL_USER: autoocasion
+      MYSQL_PASSWORD: autoocasion
+      MYSQL_ROOT_PASSWORD: rootlocal
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-prootlocal"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+volumes:
+  mysql_data:
