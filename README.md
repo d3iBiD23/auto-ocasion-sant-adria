@@ -36,6 +36,17 @@ El diseño utiliza una identidad oscura, elegante y reconocible, con el naranja 
 
 La web se adapta a distintos tamaños de pantalla sin perder información ni comodidad, especialmente en las tareas más importantes: consultar un coche, contactar y gestionar una solicitud.
 
+## Ejemplos visuales
+
+Una muestra del catálogo y de la ficha de vehículo en la demo:
+
+<p align="center">
+  <img src="docs/screenshots/stock-card.png" alt="Tarjeta de vehículo del catálogo" width="360" />
+  <img src="docs/screenshots/vehicle-detail.png" alt="Ficha de vehículo con galería" width="720" />
+</p>
+
+Las imágenes son capturas de demostración y se sustituirán por material definitivo del concesionario antes de la publicación.
+
 ## Enfoque de negocio
 
 El proyecto está planteado para ayudar al concesionario a:
